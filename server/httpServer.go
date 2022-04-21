@@ -100,6 +100,24 @@ func getUserBooksHandler(context *gin.Context) {
 	_, _ = context.Writer.Write(bf.Bytes())
 }
 
+func getReserveBooksHandler(context *gin.Context) { //数据类型待定（不知道是int还是string）,则前面的可能要改
+	iUserID, _ := context.Get("userID")
+	userID := iUserID.(int)
+	bookIDString := context.PostForm("bookID")
+	bookID, _ := strconv.Atoi(bookIDString)
+	result := agent.ReserveBook(userID, bookID)
+	context.JSON(http.StatusOK, gin.H{"status": result.Status, "msg": result.Msg})
+}
+
+func getCancelReserveBooksHandler(context *gin.Context) {
+	iUserID, _ := context.Get("userID")
+	userID := iUserID.(int)
+	bookIDString := context.PostForm("bookID")
+	bookID, _ := strconv.Atoi(bookIDString)
+	result := agent.CancelReserveBook(userID, bookID)
+	context.JSON(http.StatusOK, gin.H{"status": result.Status, "msg": result.Msg})
+}
+
 func borrowBookHandler(context *gin.Context) {
 	iUserID, _ := context.Get("userID")
 	userID := iUserID.(int)
@@ -263,6 +281,8 @@ func startService(port int, path string, staticPath string) {
 	{
 		g1.POST("/getUserBooks", getUserBooksHandler)
 		g1.POST("/getBorrowTime", getBorrowTimeHandler)
+		g1.POST("/reserveBooks", getReserveBooksHandler)
+		g1.POST("/cancelReserveBooks", getCancelReserveBooksHandler)
 		g1.POST("/borrowBook", borrowBookHandler)
 		g1.POST("/returnBook", returnBookHandler)
 	}
