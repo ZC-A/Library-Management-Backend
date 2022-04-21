@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f809108a-1921-4486-bc49-f57b44597639" name="Default Changelist" comment="1.ISBN检索器独立为文件&#10;2.ISBN检索器增加中文书籍检索，检索前填写极客API">
+    <list default="true" id="f809108a-1921-4486-bc49-f57b44597639" name="Default Changelist" comment="现在可能有点问题">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app.ini" beforeDir="false" afterPath="$PROJECT_DIR$/app.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/httpServer.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/httpServer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/services/services.go" beforeDir="false" afterPath="$PROJECT_DIR$/services/services.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -167,7 +166,8 @@
     <MESSAGE value="add ISBN retriever" />
     <MESSAGE value="1.ISBN检索器独立为文件" />
     <MESSAGE value="1.ISBN检索器独立为文件&#10;2.ISBN检索器增加中文书籍检索，检索前填写极客API" />
-    <option name="LAST_COMMIT_MESSAGE" value="1.ISBN检索器独立为文件&#10;2.ISBN检索器增加中文书籍检索，检索前填写极客API" />
+    <MESSAGE value="现在可能有点问题" />
+    <option name="LAST_COMMIT_MESSAGE" value="现在可能有点问题" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>

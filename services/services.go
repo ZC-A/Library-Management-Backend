@@ -269,8 +269,10 @@ func (agent DBAgent) BorrowBook(userID int, bookID int) *StatusResult {
 func (agent DBAgent) ReserveBook(userID int, bookID int) *StatusResult {
 	result := &StatusResult{}
 	var bookCount int
+	fmt.Println(bookID)
 	row := agent.DB.QueryRow(fmt.Sprintf("select count from book where id=%v", bookID))
 	err := row.Scan(&bookCount)
+	fmt.Println(bookCount)
 	if err != nil {
 		fmt.Println(err.Error())
 		result.Status = BorrowFailed
