@@ -208,6 +208,24 @@ func (agent DBAgent) GetUserBooksByPage(userID int, page int) []Book {
 }
 
 func (agent DBAgent) BorrowBook(userID int, bookID int) *StatusResult {
+	r := agent.DB.QueryRow(fmt.Sprintf("select * from reverse where id=%v", bookID))
+	fmt.Println(bookID)
+	if r != nil {
+		result := &StatusResult{}
+		tx, _ := agent.DB.Begin()
+		id := bookID
+		ret1, _ := tx.Exec(fmt.Sprintf("insert into borrow(id,user_id, book_id) values(%v,%v,%v)", id, userID, bookID))
+		insNums, _ := ret1.RowsAffected()
+		ret2, _ := tx.Exec(fmt.Sprintf("delete from reserve where user_id=%v and book_id=%v limit 1", userID, bookID))
+		delNums, _ := ret2.RowsAffected()
+		if insNums > 0 && delNums > 0 {
+			_ = tx.Commit()
+
+			result.Status = BorrowOK
+			result.Msg = "借阅成功"
+			return result
+		}
+	}
 	result := &StatusResult{}
 	var bookCount int
 	row := agent.DB.QueryRow(fmt.Sprintf("select count from book where id=%v", bookID))
@@ -246,6 +264,96 @@ func (agent DBAgent) BorrowBook(userID int, bookID int) *StatusResult {
 		return result
 	}
 
+}
+
+func (agent DBAgent) ReserveBook(userID int, bookID int) *StatusResult {
+	result := &StatusResult{}
+	var bookCount int
+	row := agent.DB.QueryRow(fmt.Sprintf("select count from book where id=%v", bookID))
+	err := row.Scan(&bookCount)
+	if err != nil {
+		fmt.Println(err.Error())
+		result.Status = BorrowFailed
+		result.Msg = "预定失败"
+		return result
+	}
+	if bookCount == 0 {
+		result.Status = BorrowNotEnough
+		result.Msg = "预定失败，图书数量不足"
+		return result
+	}
+
+	tx, _ := agent.DB.Begin()
+
+	id := bookID
+	ret1, _ := tx.Exec(fmt.Sprintf("insert into reserve(id,user_id, book_id,reservetime) values(%v,%v,%v,now())", id, userID, bookID))
+	if ret1 == nil {
+		_ = tx.Rollback()
+
+		result.Status = BorrowFailed
+		result.Msg = "预定失败"
+		return result
+	}
+	insNums, _ := ret1.RowsAffected()
+
+	ret2, _ := tx.Exec(fmt.Sprintf("UPDATE book set count=count-1 where id=%v", bookID)) //被预定了图书数量-1
+	if ret2 == nil {
+		_ = tx.Rollback()
+
+		result.Status = BorrowFailed
+		result.Msg = "预定失败"
+		return result
+	}
+	updNums, _ := ret2.RowsAffected()
+
+	if insNums > 0 && updNums > 0 {
+		_ = tx.Commit()
+
+		result.Status = BorrowOK
+		result.Msg = "预定成功"
+		return result
+	} else {
+		_ = tx.Rollback()
+
+		result.Status = BorrowFailed
+		result.Msg = "预定失败"
+		return result
+	}
+}
+
+func (agent DBAgent) CancelReserveBook(userID int, bookID int) *StatusResult {
+	result := &StatusResult{}
+	var borrowID int
+	row := agent.DB.QueryRow(fmt.Sprintf("select id from reserve where user_id=%v and book_id=%v", userID, bookID))
+	err := row.Scan(&borrowID)
+	if err != nil {
+		fmt.Println(err.Error())
+		result.Status = ReturnFailed
+		result.Msg = "取消预定失败，你没有预定该书籍"
+		return result
+	}
+
+	tx, _ := agent.DB.Begin()
+
+	ret1, _ := tx.Exec(fmt.Sprintf("delete from reserve where user_id=%v and book_id=%v limit 1", userID, bookID))
+	delNums, _ := ret1.RowsAffected()
+
+	ret2, _ := tx.Exec(fmt.Sprintf("UPDATE book set count=count+1 where id=%v", bookID))
+	updNums, _ := ret2.RowsAffected()
+
+	if delNums > 0 && updNums > 0 {
+		_ = tx.Commit()
+
+		result.Status = ReturnOK
+		result.Msg = "取消预定成功"
+		return result
+	} else {
+		_ = tx.Rollback()
+
+		result.Status = ReturnFailed
+		result.Msg = "取消预定失败"
+		return result
+	}
 }
 
 func (agent DBAgent) ReturnBook(userID int, bookID int) *StatusResult {
