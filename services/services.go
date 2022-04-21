@@ -222,7 +222,13 @@ func (agent DBAgent) BorrowBook(userID int, bookID int) *StatusResult {
 			_ = tx.Commit()
 
 			result.Status = BorrowOK
-			result.Msg = "借阅成功"
+			result.Msg = "预定后借阅成功"
+			return result
+		} else {
+			_ = tx.Rollback()
+
+			result.Status = BorrowFailed
+			result.Msg = "预定后借阅失败"
 			return result
 		}
 	}
@@ -272,7 +278,6 @@ func (agent DBAgent) ReserveBook(userID int, bookID int) *StatusResult {
 	fmt.Println(bookID)
 	row := agent.DB.QueryRow(fmt.Sprintf("select count from book where id=%v", bookID))
 	err := row.Scan(&bookCount)
-	fmt.Println(bookCount)
 	if err != nil {
 		fmt.Println(err.Error())
 		result.Status = BorrowFailed
