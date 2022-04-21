@@ -191,6 +191,10 @@
     <MESSAGE value="1.ISBN检索器独立为文件&#10;2.ISBN检索器增加中文书籍检索，检索前填写极客API" />
     <option name="LAST_COMMIT_MESSAGE" value="1.ISBN检索器独立为文件&#10;2.ISBN检索器增加中文书籍检索，检索前填写极客API" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="fix: 修改查看借阅时间bug" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: 修改查看借阅时间bug" />
+  </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
   </component>

@@ -73,7 +73,9 @@ func getBooksHandler(context *gin.Context) {
 func getBorrowTimeHandler(context *gin.Context) {
 	bookIDString := context.PostForm("bookID")
 	bookID, _ := strconv.Atoi(bookIDString)
-	subTime := agent.GetBorrowTime(bookID)
+	UserIDString := context.PostForm("userID")
+	userID, _ := strconv.Atoi(UserIDString)
+	subTime := agent.GetBorrowTime(bookID, userID)
 
 	bf := bytes.NewBuffer([]byte{})
 	encoder := json.NewEncoder(bf)

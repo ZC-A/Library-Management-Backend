@@ -147,8 +147,8 @@ func (agent DBAgent) GetBookNum() int {
 	return count
 }
 
-func (agent DBAgent) GetBorrowTime(bookId int) int {
-	command := fmt.Sprintf("select a.createtime from borrow a where a.book_id=%v;", bookId)
+func (agent DBAgent) GetBorrowTime(bookId int, userId int) int {
+	command := fmt.Sprintf("select a.createtime from borrow a where a.book_id=%v and a.user_id=%v;", bookId, userId)
 	row, err := agent.DB.Query(command)
 	if err != nil {
 		return 0
