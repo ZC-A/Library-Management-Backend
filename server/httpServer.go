@@ -17,6 +17,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"net/smtp"
 )
 
 var agent DBAgent
@@ -221,6 +222,77 @@ func getBookBarcodeImageHandler(context *gin.Context) {
 	}
 }
 
+// send email
+
+func AnnouncementHandler(context *gin.Context) {
+     UserID := context.PostForm("UseID")
+                                // 需要用户id来查询邮箱 status 三种状态 1 有罚款  2 有预定书籍 3 二者都有
+     contentStatus := context.PostForm("Status")
+
+     contentStatusNum, _ := strconv.Atoi(contentStatus)
+
+     UserIDN, _ := strconv.Atoi(UserID)
+
+     result := agent.MailQuery(UserIDN)
+
+     email_address := result.Msg
+
+     if result.Status == NOEmailAddress{
+
+          result.Msg = "No emailAddress"
+
+		  context.JSON(http.StatusOK, gin.H{"status": result.Status, "msg": result.Msg})
+          return
+	 }
+
+     stmpAddr := "stmp.qq.com" // 邮件服务器地址 若qq邮箱 则为 stmp.qq.com
+
+     port := "25" // qq邮箱端口
+
+     secret := "utpqwjsghhfbhdii"   //邮箱密钥
+
+     fromAddr := "1483681501@qq.com" // 用来发送邮件的邮箱地址
+
+	 contentType := "Content-Type: text/html; charset=UTF-8"
+
+	 sendAddr := stmpAddr+":"+port
+
+	 content := ""
+
+	 switch contentStatusNum{
+	    case 1: content = "You have fine, need to be paid, or you can't borrow or reserve books"
+
+	    case 2: content = "You have reserved books, please take them in 4h, or they will be cancelled."
+
+	    case 3: content = "You have both find and reserved books, please login the website for more details."
+	 
+	 }
+
+	 auth := smtp.PlainAuth("", fromAddr, secret, stmpAddr)
+
+     msg := []byte("To: " + email_address + "\r\n" +
+		 "From: " + fromAddr + "\r\n" +
+		 "Subject: " + "Announcement from Library" + "\r\n" +
+		 contentType + "\r\n\r\n" +
+		 "<html><h1>" + content + "</h1></html>")
+
+     err := smtp.SendMail(sendAddr, auth, fromAddr, []string{email_address}, msg)
+
+     if err != nil{
+
+     	result.Status = SendEmailFail
+     	result.Msg = "SendEmailFail"
+		 context.JSON(http.StatusOK, gin.H{"status": result.Status, "msg": result.Msg})
+     	return
+	 }
+
+	   result.Status = SendEmailOK
+	   result.Msg = "SendEmailOK"
+	   context.JSON(http.StatusOK, gin.H{"status": result.Status, "msg": result.Msg})
+
+}
+
+
 // ------Book BarCode Handle Section End-------
 func loadConfig(configPath string) {
 	Cfg, err := ini.Load(configPath)
@@ -285,6 +357,7 @@ func startService(port int, path string, staticPath string) {
 		g1.POST("/cancelReserveBooks", getCancelReserveBooksHandler)
 		g1.POST("/borrowBook", borrowBookHandler)
 		g1.POST("/returnBook", returnBookHandler)
+		g1.POST("/getFine", AnnouncementHandler)
 	}
 
 	g2 := router.Group("/")

@@ -66,6 +66,7 @@ func dummyRouter() *gin.Engine {
 	router.GET("/getCount", getCountHandler)
 	router.GET("/getBooks", getBooksHandler)
 	router.POST("/getBooks", getBooksHandler)
+	router.POST("/getFine", getFineHandler)
 	router.Static("/media", "F:\\Project\\Library-Management\\media")
 	//router.StaticFile("/favicon.ico", fmt.Sprintf("%v/favicon.ico", staticPath))
 
