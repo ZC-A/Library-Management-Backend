@@ -514,23 +514,3 @@ func (agent DBAgent) DeleteBook(bookID int) *StatusResult {
 		return result
 	}
 }
-
-func (agent DBAgent) MailQuery(UserID int) *StatusResult{
-
-	result := new(StatusResult)
-
-	email_address := ""
-
-	err := agent.DB.QueryRow(fmt.Sprintf("select from users where userid=%v", UserID)).Scan(&email_address)
-
-	if err != nil{
-
-		result.Status = NOEmailAddress
-		return result
-	}
-
-	result.Status = EmailQueryOK
-	result.Msg = email_address
-	return result
-
-}

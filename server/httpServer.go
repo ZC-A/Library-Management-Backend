@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"net/smtp"
+	"time"
 )
 
 var agent DBAgent
@@ -224,71 +225,55 @@ func getBookBarcodeImageHandler(context *gin.Context) {
 
 // send email
 
-func AnnouncementHandler(context *gin.Context) {
-     UserID := context.PostForm("UseID")
-                                // 需要用户id来查询邮箱 status 三种状态 1 有罚款  2 有预定书籍 3 二者都有
-     contentStatus := context.PostForm("Status")
+func AnnouncementHandler() {
+	ticker := time.NewTicker(1440*time.Minute) //每日执行一次
 
-     contentStatusNum, _ := strconv.Atoi(contentStatus)
+	for t := range ticker.C{
 
-     UserIDN, _ := strconv.Atoi(UserID)
+		fmt.Println(t)
 
-     result := agent.MailQuery(UserIDN)
+		email_address_fine := []string{} // 此处查询有罚金的客户的邮箱地址
+		                                                        //由于不知道数据库具体样子,烦请PM完善一下这里的查询函数
+		email_address_reserve := []string{} //此处查询有预定的客户的邮箱地址
 
-     email_address := result.Msg
+		stmpAddr := "smtp.qq.com" // 邮件服务器地址	 若qq邮箱 则为 smtp.qq.com 端口465 或587
 
-     if result.Status == NOEmailAddress{
+		port := "25"
 
-          result.Msg = "No emailAddress"
+		sendAddr := stmpAddr+":"+port
 
-		  context.JSON(http.StatusOK, gin.H{"status": result.Status, "msg": result.Msg})
-          return
-	 }
+		secret := "utpqwjsghhfbhdii"   //邮箱密钥
 
-     stmpAddr := "stmp.qq.com" // 邮件服务器地址 若qq邮箱 则为 stmp.qq.com
+		fromAddr := "1483681501@qq.com" // 用来发送邮件的邮箱地址
 
-     port := "25" // qq邮箱端口
+		contentType := "Content-Type: text/html; charset=UTF-8"
 
-     secret := "utpqwjsghhfbhdii"   //邮箱密钥
+		auth := smtp.PlainAuth("", fromAddr, secret, stmpAddr)
 
-     fromAddr := "1483681501@qq.com" // 用来发送邮件的邮箱地址
+		msg_fine := []byte("To: " + "Dear Client:" + "\r\n" +
+			"From: " + fromAddr + "\r\n" +
+			"Subject: " + "Announcement" + "\r\n" +
+			contentType + "\r\n\r\n" +
+			"<html><h1>" + "You have fine,please pay it." + "</h1></html>")
 
-	 contentType := "Content-Type: text/html; charset=UTF-8"
+		msg_reserve := []byte("To: " + "Dear Client:" + "\r\n" +
+			"From: " + fromAddr + "\r\n" +
+			"Subject: " + "Announcement" + "\r\n" +
+			contentType + "\r\n\r\n" +
+			"<html><h1>" + "You have fine,please pay it." + "</h1></html>")
 
-	 sendAddr := stmpAddr+":"+port
+		err_fine := smtp.SendMail(sendAddr, auth, fromAddr, email_address_fine, msg_fine)
 
-	 content := ""
+		err_reserve := smtp.SendMail(sendAddr, auth, fromAddr, email_address_reserve, msg_reserve)
 
-	 switch contentStatusNum{
-	    case 1: content = "You have fine, need to be paid, or you can't borrow or reserve books"
+		if (err_fine != nil && err_reserve != nil){
+			log.Println(err_fine)
+			log.Println(err_reserve)
 
-	    case 2: content = "You have reserved books, please take them in 4h, or they will be cancelled."
-
-	    case 3: content = "You have both find and reserved books, please login the website for more details."
-	 
-	 }
-
-	 auth := smtp.PlainAuth("", fromAddr, secret, stmpAddr)
-
-     msg := []byte("To: " + email_address + "\r\n" +
-		 "From: " + fromAddr + "\r\n" +
-		 "Subject: " + "Announcement from Library" + "\r\n" +
-		 contentType + "\r\n\r\n" +
-		 "<html><h1>" + content + "</h1></html>")
-
-     err := smtp.SendMail(sendAddr, auth, fromAddr, []string{email_address}, msg)
-
-     if err != nil{
-
-     	result.Status = SendEmailFail
-     	result.Msg = "SendEmailFail"
-		 context.JSON(http.StatusOK, gin.H{"status": result.Status, "msg": result.Msg})
-     	return
-	 }
-
-	   result.Status = SendEmailOK
-	   result.Msg = "SendEmailOK"
-	   context.JSON(http.StatusOK, gin.H{"status": result.Status, "msg": result.Msg})
+		}else{
+			fmt.Printf("发送成功")
+		}
+	}
 
 }
 
@@ -357,7 +342,6 @@ func startService(port int, path string, staticPath string) {
 		g1.POST("/cancelReserveBooks", getCancelReserveBooksHandler)
 		g1.POST("/borrowBook", borrowBookHandler)
 		g1.POST("/returnBook", returnBookHandler)
-		g1.POST("/getFine", AnnouncementHandler)
 	}
 
 	g2 := router.Group("/")
@@ -398,4 +382,5 @@ func main() {
 	var configPath = flag.String("config", "./app.ini", "配置文件路径")
 	flag.Parse()
 	loadConfig(*configPath)
+	AnnouncementHandler() // 调用执行
 }
